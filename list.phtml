@@ -1,0 +1,133 @@
+<?php
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+?>
+<?php
+/** @var \Magento\Wishlist\Block\Customer\Wishlist\Items $block */
+$columns = $block->getColumns();
+?>
+
+<form id="wishlist-view-form">
+    <div class="products-grid wishlist">
+        <?php if (count($block->getItems())) : ?>
+            <ol class="product-items">
+                <?php foreach ($block->getItems() as $item) : ?>
+                    <li data-row="product-item" class="product-item" id="item_<?= $block->escapeHtmlAttr($item->getId()) ?>">
+                        <div class="product-item-info" data-container="product-grid">
+                            <div class="checkbox">
+                                <input type="checkbox" name="wishlist_ids[]"  value="<?= $item->getWishlistItemId() ?>" />
+                            </div>
+                            <?php foreach ($columns as $column) : ?>
+                                <?= $column->setItem($item)->toHtml(); ?>
+                            <?php endforeach; ?>
+                            <div class="quantity">
+                                <input type="number" name="qty[<?= $item->getWishlistItemId() ?>]" value="1" min="1" />
+                            </div>
+                        </div>
+                    </li>
+                <?php endforeach; ?>
+            </ol>
+            <button type="button" id="add-selected">Add Selected to Cart</button>
+        <?php else : ?>
+            <div class="message info empty">
+                <span><?= $block->escapeHtml(__('This Wish List has no Items')) ?></span>
+            </div>
+        <?php endif; ?>
+    </div>
+</form>
+
+<?php foreach ($columns as $column) : ?>
+    <?= $column->getAdditionalHtml() ?>
+<?php endforeach; ?>
+
+
+
+<script>
+/*document.addEventListener('DOMContentLoaded', function() {
+    const addButton = document.getElementById('add-selected');
+    if (addButton) {
+        addButton.addEventListener('click', function() {
+            const form = document.getElementById('wishlist-view-form');
+            const formData = new FormData(form);
+
+            // Perform the AJAX request to your custom controller
+            fetch('wishlistoverride/index/index', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: new URLSearchParams(formData) // Convert form data to URL-encoded format
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Handle the response data if needed (e.g., show success message)
+                console.log(data);
+            })
+            .catch(error => {
+                // Handle any errors
+                console.error('An error occurred:', error.message);
+            });
+        });
+    }
+});*/
+</script> 
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  var addButton = document.getElementById("add-selected");
+  addButton.addEventListener("click", function() {
+    // Get the selected checkboxes
+    var selectedItems = [];
+    var qty = {};
+   
+    var checkboxes = document.getElementsByName("wishlist_ids[]");
+    var form_key = document.getElementsByName("form_key")[0].value;
+    for (var i = 0; i < checkboxes.length; i++) {
+      if (checkboxes[i].checked) {
+        selectedItems.push(checkboxes[i].value);
+        qty[checkboxes[i].value]=  document.getElementsByName("qty["+checkboxes[i].value+"]")[0].value;
+      }
+    }
+   
+    // Get the number of selected items (you can adjust this logic based on your needs)
+    var numberOfItems = selectedItems.length;   
+    var stringqty= JSON.stringify(qty);
+    // Create a new XMLHttpRequest object
+    var xhr = new XMLHttpRequest();
+
+    // Configure the AJAX request
+    xhr.open("POST", "/wishlistoverride/index/index");
+    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+    // Set up the callback for when the request completes
+    xhr.onload = function() {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        // Request was successful, handle the response here
+       response = JSON.parse(xhr.responseText);
+       window.location.href = '';
+      } else {
+        // Request failed with an error, handle the error here
+        console.error("Request failed with status:", xhr.status);
+      }
+    };
+
+    // Set up the callback for handling errors
+    xhr.onerror = function() {
+      console.error("Request failed");
+    };
+
+    // Convert the data to a URL-encoded format (if needed)
+    var data = "items=" + encodeURIComponent(selectedItems.join(",")) + "&qty=" + stringqty+ "&numItems=" + numberOfItems+ "&form_key=" + form_key;
+
+    // Send the AJAX request
+    xhr.send(data);
+  });
+});
+</script>
